@@ -25,22 +25,40 @@ int main(int argc, char* argv[]){
 		return -1;
 	}
 
-	//--------------1) VERSION CHECK--------------//
-	gstVersionCheck(argc, argv);
+	//--------------1) Init & Version Check--------------//
+	gst_init(&argc, &argv);
+	gstVersionCheck();
 
 	//--------------2) Ogg-player------------------//
 	g_print("gstOggPlayer test...\n");
 
-	//--------3) initialize the elements----------//
-	gstStatus = gstInitializeElements(pipeline, filesrc, oggdemux, decoder,
-			converter, audioOutput, msgBus);
-	if (gstStatus){
+	/* Check input arguments */
+	if (argc != 2) {
+		g_printerr ("Usage: %s <Ogg/Vorbis filename>\n", argv[0]);
 		return -1;
 	}
-	g_print("Init done.. assigning file\n");
 
-	/* we set the input filename to the source element */
-	g_object_set (G_OBJECT (filesrc), "location", argv[1], NULL);
+	//--------3) initialize the elements----------//
+	pipeline = gst_pipeline_new("oggAudioPlayer");
+	filesrc = gst_element_factory_make("filesrc", "file-src");
+	oggdemux = gst_element_factory_make("oggdemux", "ogg-demux");
+	decoder = gst_element_factory_make("vorbisdec", "vorbis-decoder");
+	converter = gst_element_factory_make("audioconvert", "converter");
+	audioOutput = gst_element_factory_make("autoaudiosink", "audio-output");
+
+	//initialize message bus
+	msgBus = gst_pipeline_get_bus( GST_PIPELINE(pipeline) );
+
+	//check if any element has not been initialized
+	if (!pipeline | !filesrc | !oggdemux | !decoder | !converter | !audioOutput
+			| !msgBus ){
+		g_print("One of the pipeline elements failed to initialize\n");
+		return -1;
+	}
+
+	g_print("Pipeline elements initialized!\n");
+
+	g_print("Init done.. assigning file\n");
 
 	//-------4) Message Handler-------------------//
 	bus_watch_id = gst_bus_add_watch(msgBus, busCallBack, loop);
@@ -48,6 +66,9 @@ int main(int argc, char* argv[]){
 	//unref the bus object
 	gst_object_unref(msgBus);
 	g_print("Unref mshBus object\n");
+
+	/* we set the input filename to the source element */
+	g_object_set (G_OBJECT (filesrc), "location", argv[1], NULL);
 
 	//------------5) Add to bin and link the elements-----------//
 	gst_bin_add_many( GST_BIN(pipeline), filesrc, oggdemux, decoder, converter,
@@ -99,12 +120,9 @@ int main(int argc, char* argv[]){
  *
  ******************************************************************************
  */
-void gstVersionCheck(int argc, char *argv[]){
+void gstVersionCheck(){
 	gchar *str;
 	guint major, minor, micro, nano;
-
-	//init gst
-	gst_init(&argc, &argv);
 
 	//version check
 	gst_version(&major, &minor, &micro, &nano);
@@ -120,48 +138,6 @@ void gstVersionCheck(int argc, char *argv[]){
 	g_print("Gstreamer version : %d.%d.%d %s\n",major,minor,micro,str);
 	g_print("-----------------------------------\n");
 
-}
-
-/*!
- ******************************************************************************
- *  @brief
- *    This function initializes the elements of the pipeline
- *
- *  @return
- *    int
- *
- *  @param[in]
- *    GstElement(s)
- *
- *  @param[out]
- *    GstElements(s)
- *
- ******************************************************************************
- */
-int gstInitializeElements(GstElement *pipeline, GstElement *filesrc,
-		GstElement *oggdemux, GstElement *decoder, GstElement *converter,
-		GstElement *audioOutput, GstBus *msgBus){
-
-	//initialize elements
-	pipeline = gst_pipeline_new("oggAudioPlayer");
-	filesrc = gst_element_factory_make("filesrc", "file-src");
-	oggdemux = gst_element_factory_make("oggdemux", "ogg-demux");
-	decoder = gst_element_factory_make("vorbisdec", "vorbis-decoder");
-	converter = gst_element_factory_make("audioconvert", "converter");
-	audioOutput = gst_element_factory_make("autoaudiosink", "audio-output");
-
-	//initialize message bus
-	msgBus = gst_pipeline_get_bus( GST_PIPELINE(pipeline) );
-
-	//check if any element has not been initialized
-	if (!pipeline | !filesrc | !oggdemux | !decoder | !converter | !audioOutput
-			| !msgBus ){
-		g_print("One of the pipeline elements failed to initialize\n");
-		return -1;
-	}
-
-	g_print("Pipeline elements initialized!\n");
-	return 0;
 }
 
 /*!

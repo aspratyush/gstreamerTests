@@ -10,12 +10,7 @@
 #include <gst/gst.h>
 
 //check gstreamer version
-void gstVersionCheck(int argc, char *argv[]);
-
-//initialize gstreamer elements
-int gstInitializeElements(GstElement *pipeline, GstElement *filesrc, GstElement
-		*oggdemux,GstElement *decoder, GstElement *converter,
-		GstElement *audioOutput, GstBus *msgBus);
+void gstVersionCheck();
 
 //create bus-callback
 int busCallBack( GstBus *bus, GstMessage *message, gpointer data );
