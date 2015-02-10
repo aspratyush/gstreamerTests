@@ -12,6 +12,11 @@
 //check gstreamer version
 void gstVersionCheck();
 
+//initialize elements
+int gstInitElements(GstElement **pipeline, GstElement **filesrc,
+		GstElement **oggdemux, GstElement **decoder, GstElement **converter,
+		GstElement **audioOutput, GstBus **msgBus);
+
 //create bus-callback
 static gboolean busCallBack (GstBus *bus, GstMessage *msg, gpointer data);
 

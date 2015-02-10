@@ -38,32 +38,20 @@ int main(int argc, char* argv[]){
 	}
 
 	//--------3) initialize the elements----------//
-	pipeline = gst_pipeline_new("oggAudioPlayer");
-	filesrc = gst_element_factory_make("filesrc", "file-src");
-	oggdemux = gst_element_factory_make("oggdemux", "ogg-demux");
-	decoder = gst_element_factory_make("vorbisdec", "vorbis-decoder");
-	converter = gst_element_factory_make("audioconvert", "converter");
-	audioOutput = gst_element_factory_make("autoaudiosink", "audio-output");
-
-	//initialize message bus
-	msgBus = gst_pipeline_get_bus( GST_PIPELINE(pipeline) );
-
-	//check if any element has not been initialized
-	if (!pipeline | !filesrc | !oggdemux | !decoder | !converter | !audioOutput
-			| !msgBus ){
-		g_print("One of the pipeline elements failed to initialize\n");
+	int status = gstInitElements(&pipeline, &filesrc, &oggdemux, &decoder, &converter,
+													&audioOutput, &msgBus);
+	if (status){
 		return -1;
 	}
-
 	g_print("Pipeline elements initialized!\n");
-
-	g_print("Init done.. assigning file\n");
 
 	//-------4) Message Handler-------------------//
 	bus_watch_id = gst_bus_add_watch(msgBus, busCallBack, loop);
 	// unref the bus object
 	gst_object_unref(msgBus);
+
 	//	we set the input filename to the source element
+	g_print("Init done.. assigning file\n");
 	g_object_set (G_OBJECT (filesrc), "location", argv[1], NULL);
 
 	//------------5) Add to bin and link the elements-----------//
@@ -124,6 +112,46 @@ void gstVersionCheck(){
 	g_print("Gstreamer version : %d.%d.%d %s\n",major,minor,micro,str);
 	g_print("-----------------------------------\n");
 
+}
+
+/*!
+ ******************************************************************************
+ *  @brief
+ *    This function queries the gstreamer version
+ *
+ *  @return
+ *    void
+ *
+ *  @param[in]
+ *    int argc, char *argv[]
+ *
+ *  @param[out]
+ *    None
+ *
+ ******************************************************************************
+ */
+int gstInitElements(GstElement **pipeline, GstElement **filesrc,
+		GstElement **oggdemux, GstElement **decoder, GstElement **converter,
+		GstElement **audioOutput, GstBus **msgBus){
+	//--------3) initialize the elements----------//
+	*pipeline = gst_pipeline_new("oggAudioPlayer");
+	*filesrc = gst_element_factory_make("filesrc", "file-src");
+	*oggdemux = gst_element_factory_make("oggdemux", "ogg-demux");
+	*decoder = gst_element_factory_make("vorbisdec", "vorbis-decoder");
+	*converter = gst_element_factory_make("audioconvert", "converter");
+	*audioOutput = gst_element_factory_make("autoaudiosink", "audio-output");
+
+	//initialize message bus
+	*msgBus = gst_pipeline_get_bus( GST_PIPELINE(*pipeline) );
+
+	//check if any element has not been initialized
+	if (!*pipeline | !*filesrc | !*oggdemux | !*decoder | !*converter | !*audioOutput
+			| !*msgBus ){
+		g_print("One of the pipeline elements failed to initialize\n");
+		return -1;
+	}
+
+	return 0;
 }
 
 /*!
