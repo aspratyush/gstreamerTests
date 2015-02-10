@@ -10,15 +10,10 @@
 #include <gst/gst.h>
 
 //check gstreamer version
-//void gstVersionCheck(int argc, char *argv[]);
-
-//initialize gstreamer elements
-//int gstInitializeElements(GstElement *pipeline, GstElement *filesrc, GstElement
-//		*oggdemux,GstElement *decoder, GstElement *converter,
-//		GstElement *audioOutput, GstBus *msgBus);
+void gstVersionCheck();
 
 //create bus-callback
-static gboolean bus_call (GstBus *bus, GstMessage *msg, gpointer data);
+static gboolean busCallBack (GstBus *bus, GstMessage *msg, gpointer data);
 
 //handle pad-addition for sometimes pad
 static void on_pad_added (GstElement *element, GstPad *pad, gpointer data);
