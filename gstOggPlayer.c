@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
 	g_object_set (G_OBJECT (source), "location", argv[1], NULL);
 	/* we add a message handler */
 	bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
-	bus_watch_id = gst_bus_add_watch (bus, busCallBack, loop);
+	bus_watch_id = gst_bus_add_watch (bus, bus_call, loop);
 	gst_object_unref (bus);
 	/* we add all elements into the pipeline */
 	/* file-source | ogg-demuxer | vorbis-decoder | converter | alsa-output */
@@ -170,30 +170,29 @@ int main(int argc, char* argv[]){
  *
  ******************************************************************************
  */
-int busCallBack( GstBus *bus, GstMessage *message, gpointer data ){
-	GMainLoop *loop = (GMainLoop *) data;
-
-	switch (GST_MESSAGE_TYPE (message)) {
-		case GST_MESSAGE_EOS:{
-			g_print ("End of stream\n");
-			g_main_loop_quit (loop);
-			break;
+static gboolean bus_call (GstBus *bus, GstMessage *msg, gpointer data){
+		GMainLoop *loop = (GMainLoop *) data;
+		switch (GST_MESSAGE_TYPE (msg)) {
+			case GST_MESSAGE_EOS:{
+				g_print ("End of stream\n");
+				g_main_loop_quit (loop);
+				break;
+			}
+			case GST_MESSAGE_ERROR: {
+				gchar *debug;
+				GError *error;
+				gst_message_parse_error (msg, &error, &debug);
+				g_free (debug);
+				g_printerr ("Error: %s\n", error->message);
+				g_error_free (error);
+				g_main_loop_quit (loop);
+				break;
+			}
+			default:
+				break;
 		}
-		case GST_MESSAGE_ERROR: {
-			gchar *debug;
-			GError *error;
-			gst_message_parse_error (message, &error, &debug);
-			g_free (debug);
-			g_printerr ("Error: %s\n", error->message);
-			g_error_free (error);
-			g_main_loop_quit (loop);
-			break;
-		}
-		default:
-			break;
-	}
 	return TRUE;
-}
+	}
 
 /*!
  ******************************************************************************
@@ -211,17 +210,13 @@ int busCallBack( GstBus *bus, GstMessage *message, gpointer data ){
  *
  ******************************************************************************
  */
-static void on_pad_added(GstElement *element, GstPad *pad, gpointer data){
-	//create sinkpad
+static void on_pad_added (GstElement *element, GstPad *pad, gpointer data)
+{
 	GstPad *sinkpad;
-	// cast data as GstElement (for decoder element)
 	GstElement *decoder = (GstElement *) data;
-
 	/* We can now link this pad with the vorbis-decoder sink pad */
 	g_print ("Dynamic pad created, linking demuxer/decoder\n");
 	sinkpad = gst_element_get_static_pad (decoder, "sink");
-
-	//link current pad to sinkpad
 	gst_pad_link (pad, sinkpad);
 	gst_object_unref (sinkpad);
 }

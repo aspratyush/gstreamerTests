@@ -10,17 +10,17 @@
 #include <gst/gst.h>
 
 //check gstreamer version
-void gstVersionCheck(int argc, char *argv[]);
+//void gstVersionCheck(int argc, char *argv[]);
 
 //initialize gstreamer elements
-int gstInitializeElements(GstElement *pipeline, GstElement *filesrc, GstElement
-		*oggdemux,GstElement *decoder, GstElement *converter,
-		GstElement *audioOutput, GstBus *msgBus);
+//int gstInitializeElements(GstElement *pipeline, GstElement *filesrc, GstElement
+//		*oggdemux,GstElement *decoder, GstElement *converter,
+//		GstElement *audioOutput, GstBus *msgBus);
 
 //create bus-callback
-int busCallBack( GstBus *bus, GstMessage *message, gpointer data );
+static gboolean bus_call (GstBus *bus, GstMessage *msg, gpointer data);
 
 //handle pad-addition for sometimes pad
-static void on_pad_added(GstElement *element, GstPad *pad, gpointer data);
+static void on_pad_added (GstElement *element, GstPad *pad, gpointer data);
 
 #endif /* GSTOGGPLAYER_H_ */
